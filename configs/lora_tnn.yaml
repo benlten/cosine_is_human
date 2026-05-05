@@ -1,0 +1,17 @@
+tag: dinov2_lora_tnn
+backbone: dinov2
+head: tnn
+
+lora_r: 8
+lora_alpha: 16
+lora_dropout: 0.05
+
+lr: 1.0e-4
+weight_decay: 1.0e-2
+batch_size: 32
+epochs: 10
+num_workers: 4
+seed: 42
+
+nights_csv: data/nights_unfiltered/nights_raw_2afc.csv
+nights_image_root: data/nights_unfiltered/dataset_unfiltered

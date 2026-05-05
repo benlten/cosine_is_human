@@ -1,0 +1,48 @@
+# Byte-compiled / caches
+__pycache__/
+*.py[cod]
+*$py.class
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# Build / dist
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Environments
+.venv/
+venv/
+env/
+
+# Results and artifacts (re-generated from configs)
+results/
+checkpoints/
+wandb/
+lightning_logs/
+*.ckpt
+*.pt
+*.safetensors
+
+# Data (must be obtained separately — see README)
+data/
+*.npy
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.bbl
+*.blg
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

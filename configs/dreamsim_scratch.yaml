@@ -1,0 +1,21 @@
+seed: 1234
+tag: lora_ensemble_100k
+log_dir: results/dreamsim_scratch
+
+model_type: 'dino_vitb16,clip_vitb16,open_clip_vitb16'
+feat_type: 'cls,embedding,embedding'
+stride: '16,16,16'
+use_lora: true
+
+dataset_root: data/nights_100k_fold0
+num_workers: 4
+
+lr: 0.0003
+weight_decay: 0.0
+batch_size: 16
+epochs: 6
+margin: 0.05
+
+lora_r: 16
+lora_alpha: 8
+lora_dropout: 0.3
