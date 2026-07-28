@@ -50,7 +50,7 @@ Dataset & NIGHTS-100k & Full 100k, 64{,}420 non-tie, 35{,}580 ties held out \\
 \label{app:perfold}
 \vspace{1em}
 
-Table~\ref{tab:main} in the main body reports the mean and standard deviation across the five cross-validation folds. Table~\ref{tab:perfold} lists the raw per-fold accuracy for each of the twelve evaluated methods so that reviewers can verify variance estimates and check for outlier folds. Folds are defined by fixed seed 42 on the full 64{,}420-triplet non-tie corpus; the same fold indices are reused across every method, so per-fold differences reflect model behavior rather than data shuffling. No fold deviates from its method's mean by more than 1 percentage point for any of the trained methods, and the across-method ordering is stable on every fold taken in isolation.
+Table~\ref{tab:main} in the main body reports the mean and standard deviation across the five cross-validation folds. Table~\ref{tab:perfold} lists the raw per-fold accuracy for each of the twelve evaluated methods so that reviewers can verify variance estimates and check for outlier folds. Folds are defined by fixed seed 42 on the full 64{,}420-triplet non-tie corpus; the same fold indices are reused across every method, so per-fold differences reflect model behavior and not data shuffling. No fold deviates from its method's mean by more than 1 percentage point for any of the trained methods, and the across-method ordering is stable on every fold taken in isolation.
 
 \begin{table}[!ht]
 \caption{Per-fold accuracies (\%) on the NIGHTS-100k non-tie corpus (5-fold cross-validation, seed 42). Each row is one method identified by the naming scheme of Table~\ref{tab:naming}. Columns are the five test folds; the same fold definitions are reused across all methods. Mean and standard deviation over the five folds are reported in Table~\ref{tab:main} of the main body.}
@@ -82,7 +82,7 @@ DreamSim-Ens-Scratch & 79.4 & 79.7 & 77.9 & 78.4 & 78.2 \\
 \label{app:kappa}
 \vspace{1em}
 
-Cohen's $\kappa$ quantifies the agreement between two classifiers after correcting for the agreement expected by chance. We compute $\kappa$ pairwise between eleven of the twelve methods in Table~\ref{tab:main} (the TNN head is omitted) on the pooled 64{,}420 non-tie test predictions (every triplet appears in exactly one fold's test split, so the pooled set is a disjoint union of the five held-out folds). Values near 1 indicate redundant methods that would gain little from ensembling; values near 0.4--0.6 indicate methods that make different errors and are candidates for ensembling. In Figure~\ref{fig:kappa} the three DINO zero-shot entries cluster tightly ($\kappa>0.63$), as do the five LoRA-adapted DINO variants ($\kappa>0.6$), confirming that the DINO family makes correlated errors. LPIPS sits further out ($\kappa=0.25\text{--}0.36$ with any DINO-family method), which is consistent with its different underlying feature basis. DreamSim-Pretrained and DreamSim-Scratch reach $\kappa=0.75$, the highest pairwise agreement in the matrix: retraining the DreamSim ensemble on NIGHTS-100k does not shift its error structure, it only shifts the overall accuracy by 2 pp. The scratch model is structurally the same predictor, trained on a cleaner subset, that fails on the same ambiguous triplets.
+Cohen's $\kappa$ quantifies the agreement between two classifiers after correcting for the agreement expected by chance. We compute $\kappa$ pairwise between eleven of the twelve methods in Table~\ref{tab:main} (the TNN head is omitted) on the pooled 64{,}420 non-tie test predictions (every triplet appears in exactly one fold's test split, so the pooled set is a disjoint union of the five held-out folds). Values near 1 indicate redundant methods that would gain little from ensembling; values near 0.4--0.6 indicate methods that make different errors and are candidates for ensembling. In Figure~\ref{fig:kappa} the three DINO zero-shot entries cluster tightly ($\kappa>0.63$), as do the five LoRA-adapted DINO variants ($\kappa>0.6$), confirming that the DINO family makes correlated errors. LPIPS falls further out ($\kappa=0.25\text{--}0.36$ with any DINO-family method), which is consistent with its different underlying feature basis. DreamSim-Pretrained and DreamSim-Scratch reach $\kappa=0.75$, the highest pairwise agreement in the matrix: retraining the DreamSim ensemble on NIGHTS-100k does not shift its error structure, it only shifts the overall accuracy by 2 pp. The scratch model is structurally the same predictor, trained on a cleaner subset, that fails on the same ambiguous triplets.
 
 \begin{figure}[!ht]
 \centering
@@ -229,7 +229,7 @@ Method and headline numbers are in \S\ref{sec:confidence}. Figure~\ref{fig:confc
 \label{app:axes_detail}
 \vspace{1em}
 
-These are the per-axis results of the Figure-6-style replica described in \S\ref{sec:shape_axes}. We report them here rather than in the main body because NIGHTS provides no human judgments on manipulated stimuli, and we collected none: the orientation, color, shading and blur axes therefore measure model invariance only and cannot be set against human behavior. The foreground/background axis is treated separately in the main text, where IN-9 and ObjectNet supply an external anchor.
+These are the per-axis results of the Figure-6-style replica described in \S\ref{sec:shape_axes}. We report them here, and not in the main body, because NIGHTS provides no human judgments on manipulated stimuli, and we collected none: the orientation, color, shading and blur axes therefore measure model invariance only and cannot be set against human behavior. The foreground/background axis is treated separately in the main text, where IN-9 and ObjectNet supply an external anchor.
 
 \begin{figure}[h]
 \centering
@@ -350,7 +350,7 @@ DreamSim-Pretrained & 93.75 & 0.680 & LoRA-trained ensemble \\
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.45\linewidth]{figures/bapps_vs_nights_crossover.pdf}
-\caption{Quadrant view of Figure~\ref{fig:crossover}. Each benchmark's split-half noise floor is drawn as a dashed line. The top-right quadrant (above both noise floors) is the only region with a generalizable cross-level alignment claim; only DreamSim-Ens-Pretrained sits inside it, and only because it was supervised-trained on the NIGHTS-20k subset.}
+\caption{Quadrant view of Figure~\ref{fig:crossover}. Each benchmark's split-half noise floor is drawn as a dashed line. The top-right quadrant (above both noise floors) is the only region with a generalizable cross-level alignment claim; only DreamSim-Ens-Pretrained falls inside it, and only because it was supervised-trained on the NIGHTS-20k subset.}
 \label{fig:crossover_quadrant}
 \end{figure}
 
@@ -453,7 +453,7 @@ These five figures were referenced from the main body §4.7 but deferred here fo
 \begin{figure}[h]
 \centering
 \includegraphics[width=0.92\linewidth]{figures/attention_zs_vs_lora.pdf}
-\caption{Three high-vote NIGHTS unanimous triplets where DINOv2 + LoRA flips the majority-choice decision. Green border = human-majority candidate; red border = LoRA's (wrong) choice. Overlay: last-layer CLS attention. Text panels report the exact $\cos(\mathrm{ref}, \cdot)$ the models used. Two consistent signatures: (i) LoRA's flips land on $\cos$ margins as small as 0.005 (spoonbill: $0.905$ vs $0.910$), exactly the voter-noise-scale differences the reproducibility analysis of Section~\ref{sec:ceiling} warned about; (ii) attention geometry is nearly identical between ZS and LoRA, so the shortcut is encoded in the feature representation (sim(full, fg-only) drops consistently for LoRA) rather than in where the model looks. Pairwise similarities computed with DINOv2 + rank-8 LoRA + cosine at 224$\times$224.}
+\caption{Three high-vote NIGHTS unanimous triplets where DINOv2 + LoRA flips the majority-choice decision. Green border = human-majority candidate; red border = LoRA's (wrong) choice. Each panel is overlaid with last-layer CLS attention and annotated with the $\cos(\mathrm{ref}, \cdot)$ values the models computed. The examples share two signatures. (i) LoRA's flips occur at $\cos$ margins as small as 0.005 (spoonbill: $0.905$ vs $0.910$), exactly the voter-noise-scale differences the reproducibility analysis of Section~\ref{sec:ceiling} warned about; (ii) attention geometry is nearly identical between ZS and LoRA, so the shortcut is encoded in the feature representation (sim(full, fg-only) drops consistently for LoRA) and not in where the model looks. Pairwise similarities computed with DINOv2 + rank-8 LoRA + cosine at 224$\times$224.}
 \label{fig:attn_zs_vs_lora}
 \end{figure}
 
@@ -495,7 +495,7 @@ Figure~\ref{fig:traces_hard} shows the complementary case: triplets with 8 to 10
 \label{fig:traces_hard}
 \end{figure}
 
-Figure~\ref{fig:traces_jnd} shows stimuli carrying both NIGHTS labels. All 608 shared stimuli come from the X-0 unanimous tier, so the 2AFC/JND comparison of \S\ref{sec:discussion} is a comparison on the easy subset rather than the hard one, and the two labels still contradict each other on 51.6\% of them.
+Figure~\ref{fig:traces_jnd} shows stimuli carrying both NIGHTS labels. All 608 shared stimuli come from the X-0 unanimous tier, so the 2AFC/JND comparison of \S\ref{sec:discussion} is a comparison on the easy subset and not the hard one, and the two labels still contradict each other on 51.6\% of them.
 
 \begin{figure}[!ht]
 \centering
