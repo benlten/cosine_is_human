@@ -1,0 +1,219 @@
+\documentclass{article}
+
+\usepackage[eandd]{neurips_2026}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{enumitem}
+
+\title{Cosine is Nearly Human: The Reproducibility Ceiling of Perceptual Similarity}
+
+\author{%
+  Anonymous Authors \\
+  Institution\\
+  \texttt{anon@email}
+}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+NIGHTS is widely used to evaluate whether image-similarity metrics match human perceptual judgments. DreamSim, the model introduced with NIGHTS, reports large gains over self-supervised baselines and has been taken as evidence that supervised training on NIGHTS produces more human-aligned visual representations. We argue that this conclusion is not supported by the benchmark as currently constructed. The public NIGHTS evaluation is based on the unanimous-agreement subset of a larger 100{,}000-triplet corpus, excluding the weak-majority and split-vote triplets where human judgments are unstable. We re-evaluate twelve perceptual-similarity methods on the full released corpus. On the 64{,}420 non-tie triplets, frozen self-supervised features with plain cosine distance reach 74.1\% accuracy without any training. LoRA fine-tuning raises accuracy to 77--79\%, and DreamSim reaches 80.7\%, but a split-half estimate from the human vote counts shows that majority labels would reproduce 70.1\% of the time overall, and 33--50\% on weak-majority triplets. Thus, much of the extra accuracy reflects fitting the collected vote sample, not evidence that the metric would better match a new set of human judgments. The problem is not only model overfitting; it is also benchmark design. NIGHTS collapses multi-axis perceptual judgments into a single binary choice, and its 2AFC similarity labels disagree with JND same/different labels on 51--64\% of shared stimuli. Fine-tuning also increases fragility under rotation, color, blur, and foreground/background ablations, suggesting that higher in-distribution accuracy can come at the cost of less stable perceptual behavior. We conclude that NIGHTS supports a narrower claim than previously assumed: cosine distance on self-supervised features captures much of the reproducible perceptual signal available in the current labels. Stronger claims about human alignment require a redesigned benchmark with more votes per triplet, axis-specific similarity questions, per-subject or per-rater statistics, and robustness ablations.
+\end{abstract}
+
+\section{Introduction}
+
+Plain cosine distance on a frozen self-supervised backbone is the human perceptual-similarity signal currently measurable in image-triplet judgments. The prevailing alternative reading is that supervised triplet training on NIGHTS~\citep{fu2023dreamsim} (DreamSim and successors) yields strictly more human-aligned representations: DreamSim, a LoRA-fine-tuned DINO+CLIP+OpenCLIP ensemble trained on NIGHTS, reports 96.2\% on the public 20{,}019-triplet release and subsequent work targets that number. Both readings sit on the same data; they cannot both be right. We argue the cosine reading is right because the dataset that should adjudicate between them does not. The 20{,}019-triplet release is the unanimous-agreement subset of a 100{,}000-triplet collection: 35{,}580 ties (50/50 splits after aggregation) and roughly 44{,}000 weak-majority triplets (patterns such as 6-1, 5-1, 3-1, 2-1) are discarded. Where annotators disagree no published evaluation has been run, and where they agree the per-method gaps sit inside the per-triplet vote-sampling noise. The cosine baseline is therefore not only a starting point; it is the signal these labels can express, and any stronger alignment claim trained against the same labels is unfalsifiable on them. The remaining gap is a labelling problem, and the successor benchmark required to move past it is what this paper motivates.
+
+To our knowledge, this is the first systematic evaluation on the full NIGHTS corpus. We ran 5-fold cross-validation on the 64{,}420 non-tie triplets. For each fold we trained on 51{,}536 triplets and evaluated on 12{,}884. The 35{,}580 tie triplets were never used for training and were held out as a bias-audit set. We introduce three methodological elements. A split-half bootstrap of the vote counts gives a reproducibility ceiling that accounts for the small per-triplet vote counts (47\% of non-tie triplets have 3 or 4 voters). An agreement-stratified accuracy breakdown reports performance per vote pattern (X-0, X-1, X-2). A tie-based calibration audit measures whether trained models remain unbiased on inputs where no majority exists.
+
+Three lines of evidence support that reading. (i) A split-half bootstrap of the per-triplet votes gives a closed-form reproducibility floor for any 2AFC benchmark, computed from the hypergeometric PMF and validated on NIGHTS (70.1\%) and BAPPS (69.0\%); on the weak-majority triplets that make up 40\% of NIGHTS-100k the labels reproduce 33--50\% of the time. (ii) A frozen DINOv1 CLS with cosine reaches 74\% with no training; LoRA fine-tuning on NIGHTS-20k raises clean accuracy 4--6 pp but tripled foreground-only fragility from 2.0 to 7.7 pp, encoding background shortcuts human object recognition does not use. (iii) The two binary labels NIGHTS publishes (2AFC ``which is more similar'' and JND ``same or different'') disagree on 51--64\% of the 608 shared stimuli, so neither is a fixed ground truth. Principal results are negative for explicit cognitive priors (Tversky, GCM, TNN heads) and for fine-tuning above the reproducibility floor; positive for plain cosine on DINO-family backbones. Full per-fold numbers, additional ablations (harmonization, C-RADIOv4 distillation, Qwen3-VL-as-judge), BAPPS cross-benchmark sanity checks, paired significance tests, ImageNet/non-ImageNet splits, and qualitative triplet traces (Appendix~\ref{app:traces}) are in the appendix.
+
+\section{Related work}
+
+LPIPS~\citep{zhang2018lpips}, generalizing pixel-domain SSIM~\citep{wang2004ssim}, established deep-feature cosine distance as a perceptual metric. Subsequent work extended this with adversarially certified~\citep{lipsim2024} and adversarially trained~\citep{croce2025robustclip} variants. DreamSim~\citep{fu2023dreamsim} introduced synthetic SD triplets and LoRA fine-tuning~\citep{hu2021lora} for human alignment, reporting 96.2\% on the filtered 20k and becoming the default backbone for follow-up work including DiffSim~\citep{song2025diffsim} and the perceptual-alignment transfer analysis of \citet{sundaram2024perceptual}. All of these evaluations use the same 20k filtered split as the original DreamSim paper.
+
+Self-supervised backbones are the strongest perceptual base. \citet{caron2021dino} showed that DINO's self-attention recovers object structure without supervision. \citet{muttenthaler2022vice}, \citet{muttenthaler2022human}, and \citet{conwell2024large} found that SSL ViTs align with human similarity and brain responses above supervised CNNs, complementing earlier evidence that ImageNet~\citep{deng2009imagenet} accuracy alone is a poor predictor of perceptual similarity~\citep{kumar2022perceptual}. \citet{oquab2023dinov2} scaled this to DINOv2 and DINOv3, and \citet{chen2025midlevel} benchmarked 22 SSL backbones on mid-level vision tasks including NIGHTS. A second line of work injects human alignment at training time: AligNet~\citep{muttenthaler2025alignet} learns an affine transform into a THINGS-derived human similarity space and distills it into vision backbones, and UniSim~\citep{ghazanfari2025unisim} trains a multi-task metric over 25 datasets including NIGHTS. A third line argues that attribute-similarity metrics (LPIPS, CLIP~\citep{radford2021clip}, DINO, DreamSim) miss \emph{relational} similarity, the shared logic between visually different scenes, and proposes a VLM-based metric for this axis~\citep{le2025relsim}. Across all of these approaches the final similarity operator is cosine distance (or a dot product on unit-norm embeddings), as is the case in retrieval and recommendation systems where cosine dominates despite its simplicity~\citep{steck2024cosine,you2025semantics}. We do not propose a new alignment method. We audit what NIGHTS can and cannot tell us about any method's human alignment, and we show that the cosine regime has reached the signal these labels contain.
+
+Cognitive theories of similarity provide alternative inductive biases. Tversky's~\citep{tversky1977} contrast model uses asymmetric feature overlap rather than distance. Nosofsky's generalized context model adds selective dimensional attention~\citep{nosofsky1986}. Gentner's structure-mapping theory aligns relational representations~\citep{gentner1983}. \citet{doumbouya2025tversky} recently introduced a fully differentiable Tversky Neural Network. We evaluated these cognitive architectures directly against plain cosine-distance heads.
+
+\section{Method}
+
+\subsection{Dataset reconstruction}
+
+The public NIGHTS release contains 20{,}019 triplets with binary vote columns. This is the unanimous subset of a larger 100{,}000-triplet collection that the authors released with raw vote proportions and per-triplet vote counts. We converted the proportions to integer counts, computed the agreement pattern (larger-smaller, e.g., ``6-1'' for 6 left and 1 right), and partitioned the corpus into 64{,}420 non-tie triplets for training and evaluation and 35{,}580 tie triplets held out for the bias audit. The published 20k release is the union of the X-0 (unanimous) patterns in the non-tie set. The vote-count distribution is skewed to small counts: 28.9\% of non-tie triplets have 3 votes, 18.2\% have 4, and 5.5\% have at least 9.
+
+\subsection{Evaluation protocol}
+
+Five-fold cross-validation with seed 42 on the 64,420 non-tie triplets. Each fold uses 51,536 training triplets and 12,884 test triplets; for LoRA methods 10\% of training is held out as validation. For each method we report the mean and standard deviation of test accuracy across the five folds, broken down by agreement pattern, and model predictions on a disjoint 7,116-triplet tie subset.
+
+\paragraph{Split-half reproducibility ceiling.} The quantity we estimate is the probability that a fresh independent re-annotation of the same triplets, with the same per-triplet vote count, would recover the same majority label. For each non-tie triplet with $L$ left votes and $R$ right votes ($V = L+R$), we randomly split the $V$ individual votes into two disjoint halves of sizes $\lfloor V/2 \rfloor$ and $\lceil V/2 \rceil$, computed each half's majority (ties broken uniformly at random), and recorded whether the two halves produced the same majority. The exact hypergeometric PMF over all $\binom{V}{\lfloor V/2 \rfloor}$ splits gives a closed-form agreement probability for each $(L, R)$ pattern. Averaging over the 64{,}420 triplets gives the expected probability that an independent replicate of the annotation procedure would produce the same majority labels we observe. This quantity is an upper bound on any method's reproducible accuracy. It is not the upper bound on accuracy against the fixed observed labels, which has a trivial 100\% ceiling.
+
+\subsection{Methods evaluated}
+
+Method names follow the template \texttt{\{Backbone\}-\{Adaptation\}-\{Head\}-\{Dataset\}}. Table~\ref{tab:naming} in the appendix lists all factor values. All accuracies in this paper are on NIGHTS-100k unless stated. For zero-shot methods we used cosine distance on the post-norm CLS token at 224$\times$224 input. For LoRA methods we applied rank-8 LoRA to the qkv and output projections of every transformer block, unfroze the final LayerNorm, and trained with Schedule-Free AdamW~\citep{defazio2024schedulefree} (learning rate $10^{-4}$ on LoRA, $2\times10^{-4}$ on the head, weight decay $10^{-2}$, 10 epochs, batch size 32). The four head variants share the same LoRA budget: plain cosine distance, our 197k-parameter Cog head (frozen cosine alignment, GCM context, and Tversky contrast with learnable $\alpha, \beta$), the inverse-frequency-stratified Cog, and the 197k-parameter Tversky Neural Network of \citet{doumbouya2025tversky} (product intersection, substractmatch difference, 256 features). DreamSim-Ens-Pretrained used the authors' public weights. DreamSim-Ens-Scratch retrained the full 3-model ensemble with rank-16 LoRA and margin-0.05 hinge loss for 6 epochs on our fold-0 training set using the published codebase unchanged.
+
+\section{Results}
+
+\subsection{Main accuracies and the cost of unfiltering}
+
+Table~\ref{tab:main} reports 5-fold mean accuracy on NIGHTS-100k for all primary methods. Per-fold numbers are in Table~\ref{tab:perfold} of the appendix. Figure~\ref{fig:drop} shows each method's accuracy on the unanimous-only X-0 subset (comparable to the published 20k) against its accuracy on the full 100k. Every method lost between 10.6 pp (LPIPS) and 17.2 pp (DreamSim-Ens-Pretrained) when evaluated on the full corpus. The strongest models lost the most because they had the most to lose on easy triplets and were the most strained by the weak-majority regime. The gap is a property of the NIGHTS filtering procedure, which retains the triplets on which humans do not disagree, not of any specific model.
+
+\begin{table}[h]
+\caption{5-fold CV accuracy on NIGHTS-100k non-tie ($N=12{,}884$ per fold). $^\dagger$Pretrained weights from the NIGHTS-20k training split, which overlaps with our k-fold test; read as a leaky upper bound. DreamSim-Ens-Scratch is retrained from scratch on NIGHTS-100k using the authors' published training recipe unchanged.}
+\label{tab:main}
+\centering
+\small
+\begin{tabular}{llcc}
+\toprule
+Method & Backbone + Head & Accuracy & Trainable params \\
+\midrule
+LPIPS-AlexNet-Pretrained & AlexNet + linear probe & $65.3 \pm 0.2$ & 0 \\
+DINOv1-ZS-CLS-cos & DINOv1 ViT-B/16 & $\mathbf{74.1 \pm 0.5}$ & 0 \\
+DINOv2-ZS-CLS-cos & DINOv2 ViT-B/14 & $70.6 \pm 0.4$ & 0 \\
+DINOv3-ZS-CLS-cos & DINOv3 ViT-B/16 & $72.0 \pm 0.4$ & 0 \\
+\midrule
+DINOv1-LoRA-Cog & DINOv1 + Cog & $75.1 \pm 0.3$ & 641{,}346 \\
+DINOv2-LoRA-Cog & DINOv2 + Cog & $77.1 \pm 0.5$ & 641{,}346 \\
+DINOv2-LoRA-Cos & DINOv2 + Cosine & $78.4 \pm 0.4$ & 443{,}904 \\
+DINOv2-LoRA-Cog-strat & DINOv2 + Cog + strat & $76.3 \pm 0.6$ & 641{,}346 \\
+DINOv2-LoRA-TNN & DINOv2 + Doumbouya 2025 TNN & $77.4 \pm 0.5$ & 640{,}515 \\
+DINOv3-LoRA-Cog & DINOv3 + Cog & $\mathbf{78.7 \pm 0.3}$ & 641{,}346 \\
+\midrule
+DreamSim-Ens-Pretrained$^\dagger$ & DINO+CLIP+OpenCLIP, 20k weights & $80.7 \pm 0.2$ & $\sim$1.8M \\
+DreamSim-Ens-Scratch & Retrained on NIGHTS-100k, votes$\geq$6 & $78.7 \pm 0.7$ & $\sim$1.8M \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\linewidth]{figures/drop_chart.pdf}
+\caption{Accuracy on the unanimous-only subset (X-0, comparable to published 20k) versus the full 100k non-tie corpus. Every method drops 10 to 17 points. The dashed line marks DreamSim's published 96.2\% on their 20k held-out split.}
+\label{fig:drop}
+\end{figure}
+
+\subsection{Agreement-stratified reliability}
+
+Figure~\ref{fig:agreement} plots accuracy against the vote-majority fraction for every method. The curves are monotonic and have the same shape across methods: near-ceiling on unanimous triplets, declining as disagreement increases, and converging toward chance on 2-1 triplets where humans themselves agree marginally above chance. The vertical gap between methods is largest in the strong-majority regime (7-1, 8-1) where task information is plentiful. On 2-1 triplets the gap between the worst LPIPS (57.0\%) and the best DreamSim (65.2\%) was 8.2 pp, and on 3-1 triplets the full method spread was 13 pp. Stronger methods did not add a constant: they picked up more signal where signal exists and could not manufacture signal where the data lacks it.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.78\linewidth]{figures/agreement_curve.pdf}
+\caption{Accuracy versus human-agreement strength on NIGHTS-100k. Shaded band at agreement=1.0 is the unanimous subset used by the published NIGHTS-20k.}
+\label{fig:agreement}
+\end{figure}
+
+\subsection{Split-half bootstrap: a noise floor on label reproducibility}
+\label{sec:ceiling}
+
+Table~\ref{tab:ceiling} reports the split-half bootstrap rate by subset. We use the phrase \emph{reproducibility noise floor} throughout: the probability that an independent re-annotation of the same triplets would produce the same majority label, under the sampling distribution that generated the observed votes. The floor is a property of the labels and the vote counts. It is not an upper bound on what any model could achieve against the fixed observed labels. A deterministic model that memorized the observed majorities reaches 100\%. The question is what a model generalizing from those labels can be expected to reproduce on a fresh vote. The overall noise floor on NIGHTS-100k non-tie was 70.1\%. The aggregate hides large per-pattern differences: the floor was 100\% on unanimous and strong-majority triplets, 80\% on 4-1, 50\% on 3-1, and 33\% on 2-1. The last two patterns together account for 46\% of the non-tie corpus, which drags the overall floor down.
+
+\begin{table}[h]
+\caption{Split-half bootstrap reproducibility noise floor on NIGHTS-100k. The probability that an independent re-annotation of the same triplets would produce the same majority labels.}
+\label{tab:ceiling}
+\centering
+\begin{tabular}{lcc}
+\toprule
+Subset & N & Noise floor \\
+\midrule
+Unanimous (X-0) & 20{,}018 & 100.0\% \\
+Strong majority (X-1, $X \geq 5$) & 7{,}922 & 100.0\% \\
+4-1 (5 voters) & 6{,}841 & 80.0\% \\
+3-1 (4 voters) & 11{,}181 & 50.0\% \\
+2-1 (3 voters) & 18{,}454 & 33.3\% \\
+\midrule
+All non-tie (NIGHTS-100k) & 64{,}420 & 70.1\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Methods exceeding 70.1\% on NIGHTS-100k (all of our LoRA variants and DreamSim) are fitting the specific voter sample that produced each triplet's majority. The additional accuracy is recovered from voter-specific structure, not from a signal that would reproduce under a fresh vote. For the 2-1 pattern in particular, any method accurate above $\sim$33\% on a re-annotated test set is over-claiming, because the observed majority itself carries roughly two-thirds label noise. We return to this prediction empirically below: methods above the noise floor traded invariance for clean-image accuracy, and 96.6\% of the best method's wrong predictions aligned with at least one dissenting human voter.
+
+The root cause is the NIGHTS collection procedure, which solicited votes until the first disagreement and then stopped. As a result, 47\% of non-tie triplets were labeled by 3 or 4 voters. For a triplet with true preference $p = 0.6$, the probability that a 3-voter sample produces a majority in the other direction is $\binom{3}{0}(0.6)^0(0.4)^3 + \binom{3}{1}(0.6)^1(0.4)^2 = 0.352$, so better than one in three observed majority labels would flip under re-annotation. A stable majority at $p=0.6$ requires on the order of 35 votes per triplet. Model differences of a few percentage points on NIGHTS-100k fall within this label-noise band. They cannot be attributed to model quality without re-annotation data.
+
+\subsection{Cognitive priors and backbone ordering}
+
+We treated the Tversky asymmetric contrast, GCM selective attention, and the differentiable TNN of \citet{doumbouya2025tversky} as controlled ablations against plain cosine distance, not as a primary contribution. Given the noise floor of Section~\ref{sec:ceiling}, any head-level gain smaller than $\sim$10 pp is not statistically separable from the label noise on weak-majority triplets. Within the LoRA-head variants on DINOv2, the plain cosine head (78.4\% $\pm$ 0.4) outperformed the Cog head (77.1\%), the inverse-frequency stratification (76.3\%), and the TNN (77.4\%). Learned asymmetry parameters converged near the symmetric point. The cognitive inductive bias added no accuracy at matched budget. Retraining the DreamSim ensemble from scratch on NIGHTS-100k with the authors' code gave $78.7 \pm 0.7$\%, which was 2.0 pp below the pretrained weights on the same splits. Weak-majority triplets carry label noise that training cannot overcome. A Cohen's-$\kappa$ inter-method analysis is in Appendix~\ref{app:kappa}.
+
+Zero-shot DINOv1 (74.1\%) beat DINOv2 (70.6\%) and DINOv3 (72.0\%) on NIGHTS-100k. Under LoRA the order flipped: DINOv3-LoRA-Cog 78.7\%, DINOv2-LoRA-Cos 78.4\%, DINOv1-LoRA-Cog 75.1\%. DINOv1 was best out of the box. DINOv3 gained the most from adaptation (6.7 pp).
+
+\paragraph{What the fine-tuning gain is made of.} The untrained DreamSim ensemble reached 74.5\%, against 74.1\% for a single frozen DINOv1, so the three-model architecture contributed 0.4 pp. DreamSim-Ens-Scratch reached 78.7\%, so training contributed 4.2 pp with no train/test overlap. The pretrained checkpoint added a further 2.0 pp overall but 3.8 pp on the unanimous subset, which is the 20k it was trained on; an advantage concentrated where the training items sit is a memorization signature. To test whether the residual 4.2 pp is a low-level effect, we binned all 64{,}420 triplets by the $\chi^2$ distance between each candidate's RGB histogram and the reference's, modifying no image. The gain was flat across bins (DreamSim-Ens-Scratch $+3.9$ pp on the color-matched quartile, where color cannot discriminate, against $+4.9$ pp where it separates the candidates, 95\% CI $\pm 0.7$), so it is not a color artifact. A logistic regression on twelve handcrafted pixel statistics alone reached 62.3\% on the same folds. The residual gain is signal rather than noise, and it is still inside the label-noise band of \S\ref{sec:ceiling}: these two readings are separable in principle, and NIGHTS as collected cannot separate them.
+
+\subsection{Generalization of the ceiling across subsets and benchmarks}
+
+The split-half bootstrap is not NIGHTS-specific. Applied to BAPPS~\citep{zhang2018lpips} (5 votes per triplet, $N=36{,}344$), the same hypergeometric-PMF procedure gave a 69.0\% ceiling, within 1 pp of NIGHTS' 70.1\%. LPIPS-AlexNet's 72.9\% sat above its ceiling, as did every DINO method and DreamSim. Any 2AFC benchmark collected at small per-triplet vote counts has a reproducibility ceiling below its reported accuracies. On NIGHTS, DINO-based methods scored 0.7 to 2.3 pp better on ImageNet-prompted~\citep{deng2009imagenet} triplets than on caption-prompted triplets. LPIPS scored in the opposite direction. All differences were small relative to the between-method gaps and the noise floor, so the main ranking is invariant to the ImageNet split (Table~\ref{tab:imnet}, appendix).
+
+Zero-shot BAPPS gave the inverted picture: DINO variants trailed LPIPS by 1.4 to 5.6 pp on low-level distortion detection while leading on NIGHTS by 5 to 10 pp. Plotting each method against both benchmarks' reproducibility noise floors (Figure~\ref{fig:crossover}, appendix) showed LPIPS clearing the BAPPS floor but falling below NIGHTS, and DINOv2 and DINOv3 inverting that pattern. Two methods cleared both floors: DreamSim-Ens-Pretrained (BAPPS 73.6, NIGHTS 80.7) after supervised NIGHTS-20k training, and zero-shot DINOv1 (BAPPS 71.5, NIGHTS 74.1) with no training at all. A single-number accuracy cannot represent this structure. Per-subset tables, the BAPPS per-category ceiling, and the quadrant view are in Appendix~\ref{app:crossover}.
+
+\subsection{Shape, texture, and the axes of perceptual alignment}
+\label{sec:shape_axes}
+
+The monotonic human-agreement curves (Figure~\ref{fig:agreement}) describe \emph{how much} each method agrees with the NIGHTS majority label, but not \emph{which image features} each method uses to agree. We probed the feature axis with two measurements: shape bias and capability~\citep{geirhos2018imagenettrained}, and a replica of the stimulus-manipulation study from the DreamSim appendix~\citep{fu2023dreamsim}.
+
+\paragraph{Cue-conflict shape bias and shape capability.} Shape \emph{capability} and shape \emph{preference} dissociate: DINOv1 $\to$ DINOv2 $\to$ DINOv3 raised cue-conflict shape bias 3.6$\times$, yet even ResNet-50, with near-zero shape bias, classified silhouettes at 81.3\%. Numbers are in Appendix~\ref{app:shape_only}.
+
+\paragraph{Fig-6-style ablation replica.} We applied eleven stimulus manipulations to all three images of each triplet from the 20k unanimous subset ($N=2000$ sampled for speed) and measured the accuracy drop relative to clean. The manipulations cover four of the five DreamSim Figure 6 axes: orientation (90/180/270$^\circ$), color (grayscale), shading (HSV V-channel histogram-equalized), structure (Gaussian blur $\sigma\in\{1,2,4,8\}$), foreground/background (keep center disc of radius 0.35$\cdot$image-side, or its complement). These measure model invariance under stimulus manipulation. We collected no human judgments on the manipulated stimuli, and none exist in NIGHTS, so the orientation, color, shading and blur axes cannot be compared against human behavior at all; their per-axis results are reported in Appendix~\ref{app:axes_detail} and we draw no perceptual conclusion from them here. Only the foreground/background axis has an external human anchor, and it is the subject of the next paragraph. The aggregate result that survives without any human comparison is a trade-off between clean accuracy and invariance, quantified below and in Figure~\ref{fig:fig6_replica}.
+
+\paragraph{Within-backbone control: epochs walk the Pareto curve.} The cost-of-accuracy trend across 16 backbones is a correlation. To test whether it is causal, we trained DINOv2 with rank-8 LoRA on NIGHTS-20k for 8 epochs and evaluated checkpoints at \{0,1,2,3,5,8\} on the same 2000-triplet ablation suite. Phase 1 (epoch 0$\to$1): clean accuracy rose 84.6 to 89.8\% and mean $|\text{drop}|$ rose 1.9 to 5.1 pp, moving up-right along the cross-backbone slope. Phase 2 (epochs 1 to 8): clean accuracy fell back to 85.2\% while fragility kept climbing to 12.3 pp. Same backbone, same data, only training duration varies. The invariance cost is causal, not a family-level confound. The full trajectory and LoRA-flip attention overlays are in Appendix~\ref{app:extra}.
+
+\paragraph{Foreground-only fragility rises after LoRA.} NIGHTS stimuli are Stable Diffusion generations with center-framed subjects against bland backgrounds, and our radial mask of radius 0.35 covers the central $\sim$38\% of image area, so the fg-only ablation removes the surround and leaves the subject intact. Zero-shot DINOv2 dropped 2.0 pp under it; DINOv2 + LoRA dropped 7.7 pp, a 3.8$\times$ increase with the object fully visible. We collected no human judgments on the manipulated stimuli, so this is a measurement of model invariance and not of model--human divergence. Two cross-dataset anchors bound the human range on a related manipulation: humans lose $\sim$3 pp under IN-9 background randomization~\citep{xiao2020backgrounds} and $\sim$1 pp on ObjectNet~\citep{barbu2019objectnet}, both categorization tasks on natural images rather than similarity judgments on synthetic triplets. The zero-shot drop sits inside that range and the LoRA drop outside it. The bg-only regression (ZS $-7.1$, LoRA $-16.1$) is not separately diagnostic, since humans should also fail once the subject is removed. Background may also serve as a tie-breaker when foreground features do not discriminate, so some rise after training may be human-like; the scalar 2AFC label does not record which feature a voter used, and NIGHTS cannot settle how much reliance is too much.
+
+\paragraph{The trade-off is monotonic.} Plotting each backbone at (clean accuracy, mean $|$drop$|$ across 11 ablations) gives an up-right shift for LoRA-trained and DreamSim-Pretrained models (Appendix Figure~\ref{fig:cost_acc}). Roughly 1 pp of clean-accuracy gain above the zero-shot band buys 1 pp of additional mean fragility across 11 independent stimulus manipulations. Above the noise floor, accuracy and invariance pull in opposite directions.
+
+\paragraph{2AFC ranking and JND threshold detection give opposite rankings.} On the 608-pair JND companion, DINOv1 led 2AFC triplet accuracy (by 3.3 pp over DINOv2) but trailed on JND same/different AUC (0.680 vs.\ 0.778 for DINOv2 and 0.781 for DINOv3, Table~\ref{tab:axes}). Texture-preferring features fit ranking under uncertainty better. Shape-preferring features generalize to threshold detection. Same backbones, same images, different task wordings, inverted rankings. A single scalar benchmark score cannot represent perceptual alignment; the best method is task-scoped (Appendix~\ref{app:axes}).
+
+\subsection{Where the remaining errors live (and paired significance)}
+\label{sec:errors}
+
+87.1\% of DreamSim-Ens-Pretrained's errors fell on weak-majority patterns and 3.4\% on unanimous triplets. On 96.6\% of DreamSim's wrong predictions at least one human voter agreed with the model (92.0\% for DINOv3-LoRA-Cog, 91.0\% for DINOv2-LoRA-Cos). Trained methods almost never picked the candidate no human picked; their errors concentrated where the human vote itself was a near coin-flip (Appendix Figure~\ref{fig:errdist}). At $N=64{,}420$ every Table~\ref{tab:main} pair is McNemar-significant at $p<10^{-3}$, but a $<10$ pp gap sits inside the reproducibility band of \S3, so the 5-fold Wilson CIs in Figure~\ref{fig:agreement} are the interpretable measure.
+
+\subsection{Model confidence versus the human vote split}
+\label{sec:confidence}
+
+Accuracy records whether a method selects the human-majority candidate. It does not record whether the method is less certain where humans disagreed. We mapped each method's score to $P(\text{left})$ by Platt scaling fitted on four folds and applied to the held-out fold, so every probability is out-of-sample, and defined model confidence as $2|P-0.5|$. The human counterpart is $2|v-0.5|$ for observed left-vote fraction $v$: 1.0 on a unanimous triplet, 0 on a 50/50 split. The 35{,}580 tie triplets never enter the calibrator fit. Platt scaling is the most favourable treatment available, because the calibrator is fitted on the same labels the methods are scored against, so residual miscalibration is a lower bound.
+
+Confidence rises with agreement for every method, and too slowly. DreamSim-Ens-Pretrained moved from 0.49 on 2-1 triplets to 0.79 on unanimous triplets while the confidence the votes support moved from 0.33 to 1.00. Separating calibration against the published label from calibration against the votes underneath it inverts the ranking: expected calibration error against the binarized majority label was lowest for DreamSim-Ens-Pretrained (0.008) and highest for LPIPS (0.022), while against the human vote fraction DreamSim was highest (0.071) and LPIPS lowest (0.022). On the 35{,}580 triplets where the vote split supports a confidence of zero, DreamSim-Ens-Pretrained reported 0.48, zero-shot DINOv1 0.38, LPIPS 0.25, and our own LoRA-trained cognitive heads 0.80 to 0.95. Training on NIGHTS reproduces the thresholding step that produced the binary label, not the uncertainty the threshold discarded.
+
+One measurement runs the other way. The Spearman correlation between calibrated $P(\text{left})$ and the observed vote fraction was 0.76 for DreamSim-Ens-Pretrained against 0.62 for zero-shot DINOv1 and 0.41 for LPIPS, and the ordering held within weak-majority triplets alone (0.48, 0.37, 0.22), where the confound between triplet difficulty and human agreement is weakest. Fine-tuning buys sensitivity to human uncertainty. It does not buy calibration to the vote distribution. Per-stratum tables and reliability curves are in Appendix~\ref{app:confidence}.
+
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{Why cosine is human, and why training cannot demonstrate otherwise.} Plain cosine distance on a frozen DINO CLS reached 74\% on NIGHTS-100k with no training and preserved human-level spatial invariance on the fg-only axis. LoRA fine-tuning raised clean accuracy from 84.6 to 89.3\%, but that 4.7-pp gain came with a loss of invariance: fg-only fragility jumped from $-2.0$ to $-7.7$ pp while the object was fully visible, and DreamSim-Pretrained was at the same time the most accurate and the most fragile method across orientation, color, heavy blur, and fg/bg masks (Fig.~\ref{fig:fig6_replica}). Cognitive heads (Tversky, GCM, TNN) recovered at most $\pm 1$ pp at matched budget, and their learned asymmetries converged near the symmetric point. The problem is more specific than ``training overfits'': any claim that a trained method is more human-aligned than cosine is unfalsifiable on NIGHTS as currently collected. The label whose reproducibility floor is 70.1\% on the full corpus and 47.2\% on weak-majority triplets cannot certify a 5-pp gap as alignment; the published 96.2\% reflects the 20\% subset where the floor is 100\% by construction. We read DreamSim as overfit to the joint distribution of voter attribute-weightings and stimulus construction that NIGHTS-20k samples, not as a more human-like representation. Closing the remaining gap will require both a new annotation protocol and reasoning mechanisms beyond scalar similarity (part-level correspondence, attribute-weighting inference, explicit compositional analysis).
+
+\paragraph{NIGHTS is a single-axis regime dressed up as a general benchmark.} Perceptual similarity decomposes into three levels of abstraction: low-level pixel fidelity (where LPIPS and BAPPS live), mid-level per-object attribute axes (pose, color, shape, texture, lighting), and high-level object identity and scene composition. NIGHTS sits at the mid-to-high interface, where voters integrate several mid-level attributes and a high-level compositional judgment into one 2AFC bit. A triplet was unanimous not by accident but because its two candidates differed predominantly along a single mid-level axis. Multi-axis trade-offs produced the weak-majority votes that dominate the 80{,}000 triplets NIGHTS-20k excluded. The 16-pp gap between DreamSim's 96.2\% on 20k and 80.7\% on 100k is the cost of crossing out of this single-axis regime. The ``label noise'' surfaced by the reproducibility ceiling is not noise. It is structured voter attribute-weighting heterogeneity that the 20k strips out and the 100k exposes. Harmonization-style alignment~\citep{fel2022harmonization} supervises on low-level pixel saliency, which is why it aligns with LPIPS but drops 8 pp on NIGHTS. Any alignment claim that reports a single benchmark reports only one band of the spectrum.
+
+\paragraph{Binary labels collapse the verdict, not the reason.} Both NIGHTS 2AFC (``which is more similar?'') and NIGHTS-JND (``same or different?'') collect a single bit per voter. Multi-axis differences (shape, color, pose, lighting, composition, background, identity) collapse into one vote that records the choice but not the attribute the voter used. The JND-vs-2AFC disagreement rate on the 608 shared stimuli was 51 to 64\% (Figure~\ref{fig:jnd_2afc_tier}), rising to 64\% at the strongest-consensus 10-0 unanimity. More 2AFC agreement did not reduce JND disagreement. The two benchmarks share stimuli: every JND pair $(r, d)$ has a matching 2AFC triplet $(r, c_1, c_2)$ with $d \in \{c_1, c_2\}$, so the dissociation is not an image-distribution artifact. Reporting either label as fixed ground truth commits to a specific reading of ``similar'' that the other label rejects. Per-voter labels are the only instrument that separates ``voters disagreed about perception'' from ``voters disagreed about task reading,'' and their absence in the public release makes that separation impossible here. The same release omits annotator identifiers and demographics. The majority verdict cannot be stratified by rater background or tested against a representative sub-population, a generic limitation of crowdsourced perceptual data~\citep{henrich2010weirdest}.
+
+\paragraph{A protocol for the next benchmark.} Model capability is not the bottleneck. DINO features give high-fidelity keypoint correspondence across pose~\citep{amir2021deepvit,caron2021dino}, ViTs are pose-robust~\citep{naseer2021intriguing,raghu2021vits}, shape/texture preference is separable~\citep{geirhos2018imagenettrained,hermann2020origins}, and color, rotation, and blur invariances are individually measurable (Appendix~\ref{app:shape_axes_extra}). What is missing is the annotation protocol. A successor to NIGHTS should specify: \textbf{(1)} one similarity axis varies per triplet, controlled at stimulus-construction time; \textbf{(2)} the 2AFC question names the axis (``which is more similar in shape?'') rather than asking a generic ``more similar''; \textbf{(3)} the public release ships per-rater raw votes with anonymized rater identifiers and a recruitment-pool summary, not aggregated counts only; \textbf{(4)} the per-triplet vote count is set to clear a target reproducibility floor (\S\ref{sec:ceiling} gives the closed-form requirement); \textbf{(5)} fixed cross-validation splits and tie-handling rules are baked into the release; \textbf{(6)} a held-out distortion suite (foreground-only, color, blur) is reported alongside the headline accuracy.
+
+\section{Limitations}
+
+Scope caveats. \textbf{(i)} Method comparisons are NIGHTS-specific; the ceiling methodology generalizes (\S3.4). \textbf{(ii)} Most backbones are ViT-B-class; the larger models we ran (ConvNeXt-L, BiT-M R101x3, C-RADIOv4-SO400M) did not improve on them. \textbf{(iii)} LoRA rank was fixed at 8 for a clean head comparison; the learned asymmetries converged near the symmetric point, so a sweep is unlikely to flip the result. \textbf{(iv)} The ``96.6\% errors have $\geq 1$ human agreeing'' interpretation assumes ambiguous pairs rather than shared model and minority-voter bias; distinguishing the two needs per-voter labels the public release lacks. \textbf{(v)} The instruction-interpretation evidence rests on ten JND pairs audited by a single co-author and is a qualitative signal, not a pre-registered re-annotation estimate. \textbf{(vi)} The split-half bootstrap estimates within-population sampling variability only: it resamples the observed votes at the observed per-triplet counts. It does not cover a different annotator pool, different task instructions, or within-session effects, each of which adds variance. The 70.1\% figure is therefore an upper bound on reproducibility, and an independent re-annotation would be expected to reproduce the labels at or below it; the result that would overturn our reading is reproduction well above it. \textbf{(vii)} The public NIGHTS release reports aggregated vote counts only. Annotator identifiers, demographics, per-rater consistency, and quality-control filtering are unavailable. Accuracy cannot be stratified by rater background, and per-rater biases cannot be detected~\citep{henrich2010weirdest}.
+
+\section*{Broader impact and reproducibility}
+
+The main consequence is improved research hygiene around a widely used benchmark; we see no direct negative impact. On acceptance we release the fold definitions, per-triplet predictions for all twelve methods, the retrained checkpoints, the split-half ceiling script, and notebooks regenerating every table and figure.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\input{appendix}
+
+\input{checklist}
+
+\end{document}
