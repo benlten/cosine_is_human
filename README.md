@@ -1,12 +1,12 @@
-# Cosine is Human: The Reproducibility Ceiling of Perceptual Similarity
+# Cosine is Nearly Human: The Reproducibility Ceiling of Perceptual Similarity
 
-Reproducibility package for the paper *"Cosine is Human: The Reproducibility Ceiling of Perceptual Similarity"*.
+Reproducibility package for the paper *"Cosine is Nearly Human: The Reproducibility Ceiling of Perceptual Similarity"*.
 
 - The public NIGHTS release ships only the **20,019 unanimous-agreement triplets** out of **100,000 originally collected**.
-- We evaluate **eleven** perceptual similarity methods on the **full 64,420 non-tie triplets** under 5-fold cross-validation.
+- We evaluate **twelve** perceptual similarity methods on the **full 64,420 non-tie triplets** under 5-fold cross-validation.
 - We introduce a **split-half bootstrap reproducibility ceiling** over raw vote counts (hypergeometric PMF) that generalizes across benchmarks.
 
-The paper PDF is at [`paper/nights_rigorous.pdf`](paper/nights_rigorous.pdf).
+The submitted PDF is at [`paper/nights_rigorous.pdf`](paper/nights_rigorous.pdf); the camera-ready PDF will replace it once final.
 
 ---
 
@@ -168,10 +168,11 @@ cosine_is_human/
 ## Citation
 
 ```bibtex
-@article{tenwolde2026cosine,
-  title   = {Cosine is Human: The Reproducibility Ceiling of Perceptual Similarity},
-  author  = {ten Wolde, Benjamin},
-  year    = {2026}
+@inproceedings{tenwolde2026cosine,
+  title     = {Cosine is Nearly Human: The Reproducibility Ceiling of Perceptual Similarity},
+  author    = {TenWolde, Benjamin and de Sa, Virginia R.},
+  booktitle = {Advances in Neural Information Processing Systems (NeurIPS), Evaluations and Datasets Track},
+  year      = {2026}
 }
 ```
 

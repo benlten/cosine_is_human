@@ -107,7 +107,7 @@ def _add_viz(sub: argparse._SubParsersAction) -> None:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="cih",
-        description="Cosine is Human: NIGHTS-100k perceptual similarity audit.",
+        description="Cosine is Nearly Human: NIGHTS-100k perceptual similarity audit.",
     )
     sub = parser.add_subparsers(dest="group", required=True)
     _add_train(sub)
