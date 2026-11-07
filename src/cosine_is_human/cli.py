@@ -71,7 +71,7 @@ def _add_analyze(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("analyze", help="Post-hoc analyses from persisted predictions")
     ssub = p.add_subparsers(dest="analysis", required=True)
 
-    p_c = ssub.add_parser("ceiling", help="Split-half reproducibility ceiling (hypergeometric PMF)")
+    p_c = ssub.add_parser("ceiling", help="Reproducibility ceiling: fresh-panel repeatability (closed-form binomial) plus split-half companion")
     p_c.add_argument("--dataset", choices=["nights", "bapps"], required=True)
     p_c.add_argument("--out", default="-", help='"-" for stdout or path to JSON output')
 

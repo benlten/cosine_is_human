@@ -4,9 +4,9 @@ Reproducibility package for the paper *"Cosine is Nearly Human: The Reproducibil
 
 - The public NIGHTS release ships only the **20,019 unanimous-agreement triplets** out of **100,000 originally collected**.
 - We evaluate **twelve** perceptual similarity methods on the **full 64,420 non-tie triplets** under 5-fold cross-validation.
-- We introduce a **split-half bootstrap reproducibility ceiling** over raw vote counts (hypergeometric PMF) that generalizes across benchmarks.
+- We introduce a **reproducibility ceiling** over raw vote counts: resampling each triplet's votes with replacement gives the closed-form probability that a fresh panel of the same size reproduces the observed majority. It generalizes across benchmarks.
 
-The submitted PDF is at [`paper/nights_rigorous.pdf`](paper/nights_rigorous.pdf); the camera-ready PDF will replace it once final.
+The camera-ready PDF is at [`paper/cosine_is_nearly_human_camera_ready.pdf`](paper/cosine_is_nearly_human_camera_ready.pdf); the original submission is kept at [`paper/nights_rigorous.pdf`](paper/nights_rigorous.pdf).
 
 ---
 
@@ -30,7 +30,7 @@ Every method loses **10–17 percentage points** when moved from the unanimous-a
 | DreamSim ensemble (pretrained) | **80.7 ± 0.2** (best overall) |
 | DreamSim ensemble (scratch, 100k) | 78.7 ± 0.7 |
 
-**Split-half reproducibility ceiling: 70.1% on NIGHTS-100k non-tie** (33% on 2-1, 50% on 3-1, 100% on X-0). Reported accuracies above this ceiling reflect fitting the specific voter sample rather than a reproducible human-preference signal. The same methodology applied to BAPPS gives a ceiling of **69.0%**, within 1 pp of NIGHTS, demonstrating the framework generalizes.
+**Reproducibility ceiling: about 89% on NIGHTS-100k non-tie** (74.1% on 2-1, 84.4% on 3-1, 94.2% on 4-1, 100% on X-0): resampling each triplet's votes with replacement, this is how often a fresh panel of the same size would reproduce the observed majority. No model reaches it (DreamSim-Pretrained, the best, scores 80.7%), so small gaps between methods fall inside the label noise. The same resampling on BAPPS gives **68.3%** for its 3-2 majorities and **94.2%** for 4-1, so the framework carries over. A split-half variant (70.1% on NIGHTS, 69.0% on BAPPS) is kept in the appendix as a more conservative companion.
 
 ![Where model errors live on NIGHTS-100k](figures/error_distribution.png)
 
@@ -98,13 +98,15 @@ cih eval bapps  --method dinov3
 All analyses read the per-triplet prediction CSVs; no retraining needed.
 
 ```bash
-cih analyze ceiling --dataset nights              # 70.1% split-half ceiling
-cih analyze ceiling --dataset bapps               # 69.0% BAPPS ceiling
+cih analyze ceiling --dataset nights              # fresh-panel ceiling (~89% non-tie) + split-half companion
+cih analyze ceiling --dataset bapps               # BAPPS: 68.3% on 3-2, 94.2% on 4-1
 cih analyze kappa   --out figures/kappa.pdf       # pairwise Cohen's kappa heatmap
 cih analyze mcnemar                                # paired McNemar tests
 cih analyze errors  --out figures/errors.pdf      # "where do errors live" plot
 cih analyze imagenet-split                         # ImageNet vs non-ImageNet subset accuracy
 ```
+
+The ceiling needs nothing but vote counts: [`scripts/reproducibility_ceiling.py`](scripts/reproducibility_ceiling.py) is a standalone, stdlib-only version that works on any 2AFC vote CSV (`python scripts/reproducibility_ceiling.py 2 1` prints the 74.1% figure).
 
 ### Regenerate paper figures
 
