@@ -51,7 +51,47 @@ Dataset & NIGHTS-100k & Full 100k, 64{,}420 non-tie, 35{,}580 ties held out \\
 \applabel{B}{app:perfold}
 \vspace{1em}
 
-Table~\ref{tab:main} reports mean accuracy and standard deviation over five cross-validation folds. Table~\ref{tab:perfold} gives the accuracy of each of the twelve models on each fold. We form folds from the 64{,}420 non-tie triplets using fixed seed 42 and reuse the same indices for every model, so comparisons are not affected by data shuffling. For trained models, no fold differs from its model's mean by more than 1 percentage point, and the model rankings stay the same on every fold.
+Table~\ref{tab:main} reports mean accuracy and standard deviation over five cross-validation folds. Table~\ref{tab:perfold} gives the accuracy of each of the twelve models on each fold. We form folds from the 64{,}420 non-tie triplets using fixed seed 42 and reuse the same indices for every model, so comparisons are not affected by data shuffling. For trained models, no fold differs from its model's mean by more than 1 percentage point, and the model rankings stay the same on every fold. Figure~\ref{fig:drop} plots each model's accuracy on the unanimous X-0 subset against its accuracy on the full corpus: every model drops 10.6--17.2 pp as the discarded disagreement is reincorporated.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.78\linewidth]{figures/drop_chart.pdf}
+\caption{The same models use 5-fold cross-validation on unanimous X-0 test folds (blue; disjoint from training, comparable to published 20k) and all non-tie NIGHTS-100k triplets (red). Each drops 10 to 17 points because test sets differ. Dashed line: DreamSim's published 96.2\% on their 20k held-out split.}
+\label{fig:drop}
+\end{figure}
+
+Figure~\ref{fig:agreement} gives the per-model curves behind Figures~\ref{fig:tier_ceiling} and~\ref{fig:gap_ties}, and Table~\ref{tab:tiergap} the accuracies by vote pattern.
+
+\begin{figure}[!ht]
+\centering
+\includegraphics[width=0.78\linewidth]{figures/agreement_curve.pdf}
+\caption{Accuracy versus human-agreement strength on NIGHTS-100k non-tie triplets. Accuracy rises with agreement for every model; DreamSim leads at most levels, but its released weights overlap our test folds. Unanimous patterns are pooled at 1.0; patterns with fewer than 100 triplets are omitted. Shaded band: the unanimous NIGHTS-20k subset.}
+\label{fig:agreement}
+\end{figure}
+
+\begin{table}[!ht]
+\caption{Accuracy by agreement tier, pooled over the five test folds, against the per-tier reproducibility ceiling (\S\ref{sec:ceiling}); the numbers behind Figures~\ref{fig:tier_ceiling} and~\ref{fig:gap_ties}. The LoRA columns are DINOv1-LoRA-Cog, DINOv2-LoRA-Cos, and DINOv3-LoRA-Cog. $^\dagger$Released weights overlap our test folds (Table~\ref{tab:main}).}
+\label{tab:tiergap}
+\centering
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcc ccc ccc cc}
+\toprule
+ & & & \multicolumn{3}{c}{Zero-shot cosine} & \multicolumn{3}{c}{+ LoRA} & \multicolumn{2}{c}{DreamSim} \\
+\cmidrule(lr){4-6}\cmidrule(lr){7-9}\cmidrule(lr){10-11}
+Agreement & N & Ceiling & v1 & v2 & v3 & v1 & v2 & v3 & Pre$^\dagger$ & Scratch \\
+\midrule
+2-1 & 18{,}454 & 74\% & 62.3 & 59.4 & 60.5 & 61.7 & 63.9 & 64.1 & 65.2 & 64.7 \\
+3-1 & 11{,}181 & 84\% & 67.6 & 64.9 & 66.5 & 68.3 & 72.1 & 72.0 & 73.0 & 71.9 \\
+4-1 & 6{,}841 & 94\% & 71.5 & 68.3 & 69.8 & 72.8 & 77.3 & 77.7 & 79.5 & 77.2 \\
+X-1 ($X \geq 5$) & 7{,}922 & 96.5--99.5\% & 76.2 & 72.7 & 73.8 & 78.8 & 82.7 & 83.0 & 85.2 & 83.5 \\
+X-0 (unanimous) & 20{,}019 & 100\% & 88.6 & 83.9 & 85.7 & 90.7 & 93.8 & 94.5 & 97.9 & 94.1 \\
+\midrule
+All non-tie & 64{,}420 & $\approx$89\% & 74.1 & 70.6 & 72.0 & 75.1 & 78.3 & 78.7 & 80.7 & 78.7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 
 \begin{table}[!ht]
 \caption{Per-fold accuracies (\%) on the NIGHTS-100k non-tie corpus ($N{=}64{,}420$ triplets; 12{,}884 per test fold; 5-fold cross-validation, seed 42). Each row is one model identified by the naming scheme of Table~\ref{tab:naming}. Columns are the five test folds; the same fold definitions are reused across all models. Mean and standard deviation over the five folds are reported in Table~\ref{tab:main} of the main body.}
@@ -264,6 +304,23 @@ These are the per-axis results of the Figure-6-style replica described in \S\ref
 
 Both observations are statements about models. Neither supports a claim about the difference between model error and human error on these stimuli, and the revision no longer makes one.
 
+\begin{table}[!ht]
+\caption{Zero-shot DINOv2 with cosine on NIGHTS-100k (5-fold mean $\pm$ s.d.). Accuracy falls monotonically with size. The 70.1\% reference is the split-half agreement of the NIGHTS votes, the probability that the two halves of a triplet's votes choose the same majority; it is a conservative companion to the $\approx$89\% fresh-panel ceiling of \S\ref{sec:ceiling}.}
+\label{tab:scale}
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+DINOv2 & Params & NIGHTS-100k & vs.\ 70.1\% & Unanimous X-0 \\
+\midrule
+ViT-S/14 & 21M  & $72.2 \pm 0.5$ & $+2.1$ & 85.8 \\
+ViT-B/14 & 86M  & $70.6 \pm 0.4$ & $+0.5$ & 83.9 \\
+ViT-L/14 & 300M & $69.0 \pm 0.2$ & $-1.1$ & 81.8 \\
+ViT-g/14 & 1.1B & $68.4 \pm 0.3$ & $-1.7$ & 80.5 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 \clearpage
 \noindent{\Large\bfseries D.6\quad Zero-shot backbone sweep}
 \applabel{D.6}{app:backbones}
@@ -319,6 +376,8 @@ This section documents the full training recipe for reproducibility. All trained
 \paragraph{Preprocessing.} Images are decoded from the NIGHTS release JPEGs, resized to $224\times 224$ with bicubic interpolation, and center-cropped. Normalization follows the backbone: ImageNet statistics (mean $[0.485, 0.456, 0.406]$, std $[0.229, 0.224, 0.225]$) for DINOv1, DINOv2, and DINOv3; $0.5/0.5$ for C-RADIOv4; the processor-supplied normalization for DreamSim and Qwen3-VL. No data augmentation is used at training time: the triplet task is orientation-sensitive, and the reference/candidate pairing is the supervision signal.
 
 \paragraph{LoRA configuration.} LoRA adapters have rank 8, $\alpha = 16$, and dropout 0.05, and are inserted on the \texttt{qkv} and \texttt{proj} linear layers of every transformer block. The backbone's final LayerNorm is also unfrozen. For DINOv2 ViT-B/14 with 12 blocks this yields 442{,}368 LoRA parameters plus 1{,}536 LayerNorm parameters, which is approximately 0.5\% of the 86M backbone. The DreamSim ensemble retraining uses rank 16 on the same modules to match the authors' released configuration.
+
+\paragraph{Heads.} Zero-shot models use cosine distance on the post-norm CLS token at $224\times224$ input. The Cog head has 197k parameters: frozen cosine alignment, GCM context, and Tversky contrast with learnable $\alpha, \beta$. The Tversky Neural Network of \citet{doumbouya2025tversky} is matched at 197k parameters, with product intersection and subtract-match difference functions and 256 features.
 
 \paragraph{Optimizer.} Schedule-Free AdamW \citep{defazio2024schedulefree} with $\beta_1 = 0.9$, $\beta_2 = 0.999$, weight decay $10^{-2}$, 100 linear warm-up steps, and a constant learning rate thereafter (no cosine schedule). Separate learning rates are used: $10^{-4}$ for LoRA and layer-norm parameters, $2\times 10^{-4}$ for the head. Gradients are clipped to a global norm of 1.0 before each optimizer step.
 
@@ -522,30 +581,30 @@ These five figures were referenced from \S\ref{sec:shape_axes} but deferred here
 \applabel{J}{app:traces}
 \vspace{1em}
 
-The analyses in the main body are aggregate. This section shows the individual stimuli behind them, drawn unmodified from the released corpus. Figure~\ref{fig:traces_agreement} illustrates what the agreement patterns of \S\ref{sec:ceiling} look like on single triplets, one per pattern from 2-1 to 7-0. A 2-1 triplet carries a label a fresh panel of three annotators would reproduce a third of the time; a 7-0 triplet carries one that reproduces every time. Both contribute equally to a headline accuracy.
+The analyses in the main body are aggregate. This section shows the individual stimuli behind them, drawn unmodified from the released corpus. Figure~\ref{fig:traces_agreement} illustrates what the agreement patterns of \S\ref{sec:ceiling} look like on single triplets, one per pattern from 2-1 to 7-0. A 2-1 triplet carries a label that a fresh panel of three annotators would overturn about a quarter of the time; a 7-0 triplet carries one that reproduces every time. Both contribute equally to a headline accuracy.
 
-\begin{figure}[p]
+\begin{figure}[!ht]
 \centering
-\includegraphics[height=0.86\textheight]{figures/triplet_traces_by_agreement.png}
-\caption{One NIGHTS-2AFC triplet per vote pattern. Reference, the candidate the human majority chose, and the alternative, with the vote split annotators produced. Prompts and triplet ids are given beside each row.}
+\includegraphics[width=\linewidth]{figures/triplet_traces_by_agreement_v2.png}
+\caption{One NIGHTS-2AFC triplet per vote pattern, from 2-1 to 7-0: the reference, the candidate the human majority chose (green), and the alternative (red), each with its vote count. Prompts and triplet ids are given above each triplet.}
 \label{fig:traces_agreement}
 \end{figure}
 
-Figure~\ref{fig:traces_hard} shows the complementary case: triplets with 8 to 10 votes on one side, where the label is as stable as NIGHTS labels get, and where DreamSim-Pretrained still selects the other candidate. These are the errors the reproducibility ceiling does not explain, and they are 3.4\% of that model's disagreements with the majority label.
+Figure~\ref{fig:traces_hard} shows the complementary case: unanimous triplets with nine or ten votes, where the label is as stable as NIGHTS labels get, and where DreamSim-Pretrained still selects the other candidate. It does so on 20 of the 3{,}126 such triplets. These are the errors the reproducibility ceiling does not explain, and they are 3.4\% of that model's disagreements with the majority label.
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=\linewidth]{figures/unanimous_hard_examples.png}
-\caption{Unanimous triplets that the strongest model in Table~\ref{tab:main} gets wrong. Vote pattern and prompt are given under each panel.}
+\includegraphics[width=\linewidth]{figures/unanimous_hard_examples_v2.png}
+\caption{Unanimous triplets with nine or ten votes that DreamSim-Pretrained, the strongest model in Table~\ref{tab:main}, gets wrong: it picks the candidate no voter chose (red). The eight with the most votes are shown; vote pattern, prompt, and triplet id are given above each triplet.}
 \label{fig:traces_hard}
 \end{figure}
 
-Figure~\ref{fig:traces_jnd} shows stimuli carrying both NIGHTS labels. All 608 shared triplets come from the X-0 unanimous tier, so the 2AFC/JND comparison of \S\ref{sec:discussion} is a comparison on the easy subset and not the hard one. Even so, the labels conflict on 44\% of the 1{,}216 reference--candidate pairs, almost always because JND voters judged the unanimous 2AFC winner different from the reference (82\% of winners). A stricter, relative test asks whether JND voters at least judged the winner less different than the loser: they did on 42.3\% of triplets, could not separate the two on 39.6\%, and judged the winner more different on 18.1\%.
+Figure~\ref{fig:traces_jnd} shows stimuli carrying both NIGHTS labels. All 608 shared triplets come from the X-0 unanimous tier, so the 2AFC/JND comparison of \S\ref{sec:discussion} is a comparison on the easy subset and not the hard one. JND majorities judged both candidates different from the reference in 466 triplets (77\%). In 137 triplets exactly one candidate was judged the same, the chosen one in 103 and the rejected one in 34, and in the remaining 5 both were. Comparing the two JND vote fractions within a triplet, voters judged the chosen candidate less different than the rejected one on 42.3\% of triplets, could not separate the two on 39.6\%, and judged the chosen one more different on 18.1\%.
 
 \begin{figure}[!ht]
 \centering
-\includegraphics[width=0.62\linewidth]{figures/jnd_2afc_conflict_examples.png}
-\caption{Triplets whose two human labels conflict. (a, b) Unanimous 10/10 2AFC winners that all three JND voters judged different from the reference, as were the losers: the typical conflict, a forced choice between two visibly different images. (c) A unanimous 2AFC loser that all three JND voters judged the same as the reference. (d) A relative contradiction: JND voters judged the 2AFC winner more different from the reference than the loser. Vote counts are given above each image.}
+\includegraphics[width=\linewidth]{figures/jnd_2afc_examples_v2.png}
+\caption{Triplets carrying both human labels, two for each of the three cases. The label at the top of each candidate gives its 2AFC votes; the label at the bottom gives the JND majority verdict and its vote count.}
 \label{fig:traces_jnd}
 \end{figure}
 
